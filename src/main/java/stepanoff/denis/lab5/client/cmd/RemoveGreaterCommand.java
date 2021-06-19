@@ -48,7 +48,7 @@ public class RemoveGreaterCommand extends ParametrisedCommand {
 
             try {
                 Future<List<TypedEntity>> ret = this.connector.manageRequest(
-                        new Request(new CommandLabel(this.name)).add(new TypedEntity(name))
+                        new Request(Main.provideCredentials(), new CommandLabel(this.name)).add(new TypedEntity(name))
                 );
 
                 while (!ret.isDone()) {
@@ -58,7 +58,9 @@ public class RemoveGreaterCommand extends ParametrisedCommand {
                 System.out.println();
 
                 int remCol = (int) ret.get().get(0).get();
-                println(remCol + " elements removed.");
+
+                if (remCol < 0) println("Invalid credentials", ConsoleWriter.Color.RED);
+                else println(remCol + " elements removed.");
             } catch (InterruptedException e) {
                 Main.provideLogger().error(e.getMessage());
                 ConsoleWriter.println(e.getMessage(), ConsoleWriter.Color.RED);

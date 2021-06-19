@@ -47,7 +47,7 @@ public class RemoveByIdCommand extends ParametrisedCommand {
 
             try {
                 Future<List<TypedEntity>> resp = this.connector.manageRequest(
-                        new Request(new CommandLabel(this.name)).add(new TypedEntity(id))
+                        new Request(Main.provideCredentials(), new CommandLabel(this.name)).add(new TypedEntity(id))
                 );
 
                 while (!resp.isDone()) {
@@ -59,6 +59,10 @@ public class RemoveByIdCommand extends ParametrisedCommand {
                 if (resp.get().get(0).getType().equals(Ticket.class)) {
                     ConsoleWriter.println("Ticket deleted", ConsoleWriter.Color.GREEN);
                 } else {
+                    if ((Integer) resp.get().get(0).get() == 5) {
+                        println("Invalid credentials", ConsoleWriter.Color.RED);
+                        return;
+                    }
                     ConsoleWriter.println("Server haven't help request correctly or such ticket is not found", ConsoleWriter.Color.RED);
                 }
             } catch (InterruptedException e) {

@@ -76,10 +76,12 @@ public class CommandLineExecutor {
     }
 
     private void doSave() {
-        Main.provideExecutor().execute(new CommandLabel("save"), null);
+        Main.provideExecutor().await();
+        Main.provideExecutor().execute(new CommandLabel("save"), null, null);
     }
 
     private void doExit() {
+        Main.provideExecutor().await();
         System.exit(0);
     }
 }

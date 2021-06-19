@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static stepanoff.denis.lab5.common.util.ConsoleWriter.println;
+
 /**
  * Implementation of 'sum_of_price' command.
  */
@@ -27,7 +29,7 @@ public class SumOfPriceCommand extends Command {
             try {
 
                 Future<List<TypedEntity>> ret = this.connector.manageRequest(
-                        new Request(new CommandLabel(this.name)).add(new TypedEntity(name))
+                        new Request(Main.provideCredentials(), new CommandLabel(this.name)).add(new TypedEntity(name))
                 );
 
                 while (!ret.isDone()) {
@@ -37,6 +39,11 @@ public class SumOfPriceCommand extends Command {
                 System.out.println();
 
                 double sum = (double) ret.get().get(0).get();
+
+                if (sum < 0) {
+                    println("Invalid credentials", ConsoleWriter.Color.RED);
+                    return;
+                }
 
                 ConsoleWriter.println(String.format("The sum of prices of all elements in collection: %.2f", sum));
             } catch (InterruptedException e) {

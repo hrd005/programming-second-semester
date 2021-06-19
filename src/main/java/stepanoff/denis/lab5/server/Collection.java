@@ -2,7 +2,8 @@ package stepanoff.denis.lab5.server;
 
 import org.slf4j.Logger;
 import stepanoff.denis.lab5.common.data.Ticket;
-import stepanoff.denis.lab5.server.dataio.FileIO;
+import stepanoff.denis.lab5.server.dataio.DataSource;
+import stepanoff.denis.lab5.server.dataio.file.FileIO;
 import stepanoff.denis.lab5.common.dataio.FileReadingException;
 import stepanoff.denis.lab5.common.util.ConsoleWriter;
 
@@ -28,39 +29,24 @@ public class Collection {
     private final Logger logger = Main.provideLogger();
 
     private final LinkedList<Ticket> list = new LinkedList<>();
-    private File file;
-    private LocalDate initializationDate = null;
-    private LocalDate modificationDate = null;
+    private final DataSource source;
+//    private LocalDate initializationDate = null;
+//    private LocalDate modificationDate = null;
 
     private boolean isUnsaved = false;
 
-    /**
-     * @param file File where Collection data is located.
-     */
-    public Collection(File file) {
-
-        this.file = file;
-        Path path = file.toPath();
-        BasicFileAttributes attributes = null;
-        try {
-            attributes = Files.readAttributes(path, BasicFileAttributes.class);
-        } catch (IOException e) {
-            logger.warn("Failed to read Collection info -- " + e.getMessage());
-        }
-
-        if (attributes != null) {
-            this.initializationDate = LocalDate.from(attributes.creationTime().toInstant().atZone(ZoneId.systemDefault()));
-            this.modificationDate = LocalDate.from(attributes.lastModifiedTime().toInstant().atZone(ZoneId.systemDefault()));
-        }
+    public Collection(DataSource source) {
+        this.source = source;
     }
 
     /**
      * Add element to Collection
      * Collection will become unsaved
      * @param ticket element
+     * @return whether element added or not
      */
-    public void add(Ticket ticket) {
-        this.add(ticket, false);
+    public boolean add(Ticket ticket) {
+        return this.add(ticket, false);
     }
 
     /**
@@ -68,26 +54,36 @@ public class Collection {
      * @param ticket element
      * @param silent true -- collection will not become unsaved
      *               false -- collection will become unsaved.
+     * @return whether element added or not
      */
-    public void add(Ticket ticket, boolean silent) {
+    public synchronized boolean add(Ticket ticket, boolean silent) {
         //if (!silent) this.isUnsaved = true;
 
-        if (!this.getTicketIdManager().isIdAppropriate(ticket.getId())) {
-            logger.warn("Doubled Ticket ID " + ticket.getId() + ". Element ignored.");
-            ConsoleWriter.println("Specified Ticket ID is already present.\n\tElement is not added.", ConsoleWriter.Color.RED);
-            return;
+//        if (!this.getTicketIdManager().isIdAppropriate(ticket.getId())) {
+//            logger.warn("Doubled Ticket ID " + ticket.getId() + ". Element ignored.");
+//            ConsoleWriter.println("Specified Ticket ID is already present.\n\tElement is not added.", ConsoleWriter.Color.RED);
+//            return false;
+//        }
+//
+//        if (!this.getVenueIdManager().isIdAppropriate(ticket.getVenue().getId())) {
+//            logger.warn("Doubled Venue ID " + ticket.getVenue().getId() + ". Element ignored.");
+//            ConsoleWriter.println("Specified Venue ID is already present. \n\tElement is not added.", ConsoleWriter.Color.RED);
+//            return false;
+//        }
+
+        if (this.source.isCommitNewSupported() && !silent) {
+            Ticket toAdd = this.source.commitNew(ticket);
+            if (toAdd == null) return false;
+            this.list.add(toAdd);
+        } else {
+            this.list.add(ticket);
         }
 
-        if (!this.getVenueIdManager().isIdAppropriate(ticket.getVenue().getId())) {
-            logger.warn("Doubled Venue ID " + ticket.getVenue().getId() + ". Element ignored.");
-            ConsoleWriter.println("Specified Venue ID is already present. \n\tElement is not added.", ConsoleWriter.Color.RED);
-            return;
-        }
         if (!silent) {
             this.isUnsaved = true;
             logger.info("Element added.");
         }
-        this.list.add(ticket);
+        return true;
     }
 
     /**
@@ -95,7 +91,7 @@ public class Collection {
      * @param id id of Ticket (element)
      * @return Optional Ticket with specified id.
      */
-    public Optional<Ticket> take(int id) {
+    public synchronized Optional<Ticket> take(int id) {
         Optional<Ticket> requested = this.list.stream().filter((Ticket t) -> t.getId() == id).findFirst();
         requested.ifPresent((Ticket t) -> {
             this.isUnsaved = true;
@@ -111,7 +107,7 @@ public class Collection {
      * @param id id of Ticket (element)
      * @return Optional Ticket with specified id.
      */
-    public Optional<Ticket> look(int id) {
+    public synchronized Optional<Ticket> look(int id) {
         return this.list.stream().filter((Ticket t) -> t.getId() == id).findFirst();
     }
 
@@ -119,7 +115,7 @@ public class Collection {
      * Get and remove first element. Equivalent to take(0)
      * @return Optional Ticket
      */
-    public Optional<Ticket> pop() {
+    public synchronized Optional<Ticket> pop() {
         this.isUnsaved = !this.list.isEmpty() || this.isUnsaved;
         if (this.isUnsaved) logger.info("Element removed.");
         return this.list.stream().sorted().findFirst();
@@ -129,23 +125,34 @@ public class Collection {
      * Get Maximal element
      * @return Optional Ticket
      */
-    public Optional<Ticket> getMax() {
+    public synchronized Optional<Ticket> getMax() {
         return this.list.stream().max(Comparator.naturalOrder());
     }
 
     /**
      * Remove all elements
      */
-    public void clear() {
-        this.isUnsaved = !this.list.isEmpty() || this.isUnsaved;
+    public synchronized void clear(int uid) {
+
+        List<Ticket> toRem = this.list.stream()
+                .filter((Ticket t) -> t.getOwnerId() == uid)
+                .collect(Collectors.toList());
+
+        this.isUnsaved = this.isUnsaved || !toRem.isEmpty();
+
+        this.list.removeAll(toRem);
+
+        logger.info("Your elements in collection removed.");
+    }
+
+    private synchronized void clear() {
         this.list.clear();
-        logger.info("Collection cleared.");
     }
 
     /**
      * @return sum of prices of all Tickets in collection
      */
-    public double getSumOfPrice() {
+    public synchronized double getSumOfPrice() {
         return this.list.stream().mapToDouble(Ticket::getPrice).sum();
     }
 
@@ -154,7 +161,7 @@ public class Collection {
      * @param predicate filter
      * @return Filtered List
      */
-    public List<Ticket> getFiltered(Predicate<Ticket> predicate) {
+    public synchronized List<Ticket> getFiltered(Predicate<Ticket> predicate) {
         return this.list.stream().filter(predicate).collect(Collectors.toList());
     }
 
@@ -172,7 +179,7 @@ public class Collection {
      * @param comparator comparing function
      * @return Sorted List
      */
-    public List<Ticket> getSorted(Comparator<Ticket> comparator) {
+    public synchronized List<Ticket> getSorted(Comparator<Ticket> comparator) {
         return this.list.stream().sorted(comparator).collect(Collectors.toList());
     }
 
@@ -184,31 +191,31 @@ public class Collection {
         return this.getSorted(Comparator.comparing(Ticket::getType));
     }
 
-    /**
-     * @return Time when file with collection data was created
-     */
-    public LocalDate getInitializationDate() {
-        return this.initializationDate;
-    }
+//    /**
+//     * @return Time when file with collection data was created
+//     */
+//    public LocalDate getInitializationDate() {
+//        return this.initializationDate;
+//    }
 
-    /**
-     * @return Time when file with collection data was modified last time
-     */
-    public LocalDate getModificationDate() {
-        return this.modificationDate;
-    }
+//    /**
+//     * @return Time when file with collection data was modified last time
+//     */
+//    public LocalDate getModificationDate() {
+//        return this.modificationDate;
+//    }
 
     /**
      * @return number of elements in collection
      */
-    public int size() {
+    public synchronized int size() {
         return this.list.size();
     }
 
     /**
      * @return status of changes
      */
-    public boolean isUnsaved() {
+    public synchronized boolean isUnsaved() {
         return isUnsaved;
     }
 
@@ -228,33 +235,33 @@ public class Collection {
         return new IdManager(this.list.stream().mapToLong((Ticket t) -> t.getVenue().getId()));
     }
 
-    /**
-     * @return File where collection data supposed to be stored.
-     */
-    public File getFile() {
-        return this.file;
-    }
+//    /**
+//     * @return File where collection data supposed to be stored.
+//     */
+//    public File getFile() {
+//        return this.file;
+//    }
 
     /**
      * Convert collection to plain List
      * @return LinkedList containing all elements of collection
      */
-    public LinkedList<Ticket> asList() {
+    public synchronized LinkedList<Ticket> asList() {
         return this.list;
     }
 
-    /**
-     * Update collection from specified File
-     * @param file new file
-     * @throws FileReadingException if not possible to read file correctly.
-     */
-    public void reload(File file) throws FileReadingException {
-        Collection newCol = FileIO.getReader().parseFile(file.getAbsolutePath());
+//    /**
+//     * Update collection from specified File
+//     * @param file new file
+//     * @throws FileReadingException if not possible to read file correctly.
+//     */
+    public synchronized void reload() {
+        Collection newCol = this.source.readAll();
         this.clear();
         this.list.addAll(newCol.asList());
-        this.file = newCol.getFile();
-        this.initializationDate = newCol.initializationDate;
-        this.modificationDate = newCol.modificationDate;
+//        this.file = newCol.getFile();
+//        this.initializationDate = newCol.initializationDate;
+//        this.modificationDate = newCol.modificationDate;
         this.isUnsaved = false;
     }
 
@@ -262,11 +269,11 @@ public class Collection {
      * Make a copy of collection
      * @return the same collection
      */
-    public Collection copy() {
-        Collection newCol = new Collection(this.file);
+    public synchronized Collection copy() {
+        Collection newCol = new Collection(this.source);
         this.list.forEach((Ticket t) -> newCol.list.add(t.copy()));
-        newCol.initializationDate = this.initializationDate;
-        newCol.modificationDate = this.modificationDate;
+//        newCol.initializationDate = this.initializationDate;
+//        newCol.modificationDate = this.modificationDate;
         newCol.isUnsaved = this.isUnsaved;
 
         return newCol;
@@ -276,7 +283,7 @@ public class Collection {
      * @return String representation
      */
     @Override
-    public String toString() {
+    public synchronized String toString() {
         return this.list.isEmpty()? "Nothing to show"
                 : this.list.stream().map(Ticket::toString).collect(Collectors.joining(",\n"));
     }

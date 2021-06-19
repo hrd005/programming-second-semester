@@ -1,6 +1,7 @@
 package stepanoff.denis.lab5.client.net;
 
 import stepanoff.denis.lab5.common.cmd.CommandLabel;
+import stepanoff.denis.lab5.common.util.Authentication;
 import stepanoff.denis.lab5.common.util.TypedEntity;
 
 import java.util.LinkedList;
@@ -12,13 +13,15 @@ import java.util.Queue;
 public class Request {
 
     private final CommandLabel command;
+    private final Authentication authentication;
     private final LinkedList<TypedEntity> toSend = new LinkedList<>();
 
     /**
      * Initialize Request with Command
      * @param command -- CommandLabel associated with Request
      */
-    public Request(CommandLabel command) {
+    public Request(Authentication authentication, CommandLabel command) {
+        this.authentication = authentication;
         this.command = command;
     }
 
@@ -39,6 +42,7 @@ public class Request {
      */
     Queue<Object> toSendingQueue() {
         this.toSend.addFirst(new TypedEntity(this.command));
+        this.toSend.addFirst(new TypedEntity(this.authentication));
         return new LinkedList<>(this.toSend);
     }
 }

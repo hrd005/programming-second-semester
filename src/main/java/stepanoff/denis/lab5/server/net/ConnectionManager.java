@@ -27,13 +27,15 @@ public class ConnectionManager {
      * Main server cycle
      */
     public void start() {
+        System.out.println("Listening on port " + PORT);
         logger.info("Listening on port " + PORT);
         while (running) {
 
             try {
                 Socket socket = serverSocket.accept();
                 logger.info("Accepted connection from " + socket.getInetAddress().getHostName());
-                new RequestReader(socket).process();
+                Thread reader = new Thread(() -> new RequestReader(socket).process());
+                reader.start();
 
             } catch (IOException e) {
                 logger.warn("Failed to accept connection: " + e.getMessage());

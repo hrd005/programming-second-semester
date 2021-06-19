@@ -7,7 +7,7 @@ import stepanoff.denis.lab5.common.data.*;
 import stepanoff.denis.lab5.common.net.NetException;
 import stepanoff.denis.lab5.common.util.ConsoleWriter;
 import stepanoff.denis.lab5.common.util.TypedEntity;
-import stepanoff.denis.lab5.server.dataio.InvalidFileException;
+import stepanoff.denis.lab5.server.dataio.file.InvalidFileException;
 
 import java.io.IOException;
 import java.util.List;
@@ -72,6 +72,7 @@ public class AddIfMaxCommand extends AddCommand {
 
                 Future<List<TypedEntity>> ret = connector.manageRequest(
                         new Request(
+                                Main.provideCredentials(),
                                 new CommandLabel(this.name)
                         ).add(new TypedEntity(_new))
                 );
@@ -86,6 +87,8 @@ public class AddIfMaxCommand extends AddCommand {
                     println("Ticket added", ConsoleWriter.Color.GREEN);
                 else if (ret_status == 2)
                     println("Ticket not added (not maximal ticket in collection)", ConsoleWriter.Color.YELLOW);
+                else if ((Integer) ret.get().get(0).get() == 5)
+                    println("Invalid credentials", ConsoleWriter.Color.RED);
                 else
                     println("Server hadn't held request correctly", ConsoleWriter.Color.RED);
 

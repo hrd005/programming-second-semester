@@ -5,6 +5,7 @@ import stepanoff.denis.lab5.client.net.Request;
 import stepanoff.denis.lab5.common.cmd.CommandLabel;
 import stepanoff.denis.lab5.common.data.Ticket;
 import stepanoff.denis.lab5.common.net.NetException;
+import stepanoff.denis.lab5.common.util.Authentication;
 import stepanoff.denis.lab5.common.util.ConsoleWriter;
 import stepanoff.denis.lab5.common.util.TypedEntity;
 
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+
+import static stepanoff.denis.lab5.common.util.ConsoleWriter.println;
 
 /**
  * Implementation of 'print_field_descending_type' command.
@@ -37,7 +40,7 @@ public class PrintFieldDescendingTypeCommand extends Command {
 //            }
             try {
                 Future<List<TypedEntity>> resp = this.connector.manageRequest(
-                        new Request(new CommandLabel("show"))
+                        new Request(Main.provideCredentials(), new CommandLabel("show"))
                 );
                 while (!resp.isDone()) {
                     Thread.sleep(50);
@@ -48,6 +51,10 @@ public class PrintFieldDescendingTypeCommand extends Command {
                 List<TypedEntity> ret = resp.get();
 
                 if (ret.size() == 1 && ret.get(0).getType().equals(Integer.class)) {
+                    if ((Integer) resp.get().get(0).get() == 5) {
+                        println("Invalid credentials", ConsoleWriter.Color.RED);
+                        return;
+                    }
                     ConsoleWriter.println("Nothing to show");
                     return;
                 }

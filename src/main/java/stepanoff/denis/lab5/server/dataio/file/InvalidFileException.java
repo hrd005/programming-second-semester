@@ -1,4 +1,4 @@
-package stepanoff.denis.lab5.server.dataio;
+package stepanoff.denis.lab5.server.dataio.file;
 
 /**
  * Exception for cases when file is corrupted.

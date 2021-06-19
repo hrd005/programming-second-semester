@@ -1,4 +1,4 @@
-package stepanoff.denis.lab5.server.dataio;
+package stepanoff.denis.lab5.server.dataio.file;
 
 import stepanoff.denis.lab5.server.Collection;
 

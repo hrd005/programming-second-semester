@@ -2,6 +2,7 @@ package stepanoff.denis.lab5.server.net;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stepanoff.denis.lab5.common.util.Authentication;
 import stepanoff.denis.lab5.server.cmd.CommandArgument;
 import stepanoff.denis.lab5.common.cmd.CommandLabel;
 import stepanoff.denis.lab5.common.data.Ticket;
@@ -60,30 +61,35 @@ public class RequestReader {
             logger.error("Serialization fault -- " + e.getMessage());
         }
 
-        if (received.isEmpty() || !received.getFirst().getType().equals(CommandLabel.class)) {
+        if (received.isEmpty() || !received.getFirst().getType().equals(Authentication.class)) {
             logger.error("Invalid request received. Stop processing.");
             return;
         }
-        if (received.isEmpty()) return; // Just to calm down IDE warning. Situation is handled in previous 'if'
+        if (received.size() < 2) return; // Just to calm down IDE warning. Situation is handled in previous 'if'
+        Authentication auth = (Authentication) received.pollFirst().get();
+        if (!received.getFirst().getType().equals(CommandLabel.class)) {
+            logger.error("Invalid request received. Stop processing.");
+            return;
+        }
         CommandLabel command = (CommandLabel) received.pollFirst().get();
         logger.info(command.label + " command requested.");
 
         LinkedList<TypedEntity> response = null;
         if (received.size() == 0) {
-            response = Main.provideExecutor().execute(command, null);
+            response = Main.provideExecutor().execute(command, null, auth);
         } else {
             TypedEntity arg = received.pollFirst();
             if (arg.getType().equals(Ticket.class)) {
-                response = Main.provideExecutor().execute(command, new CommandArgument(arg.get()));
+                response = Main.provideExecutor().execute(command, new CommandArgument(arg.get()), auth);
             }
             if (arg.getType().equals(Double.class)) {
-                response = Main.provideExecutor().execute(command, new CommandArgument(arg.get()));
+                response = Main.provideExecutor().execute(command, new CommandArgument(arg.get()), auth);
             }
             if (arg.getType().equals(Integer.class)) {
-                response = Main.provideExecutor().execute(command, new CommandArgument(arg.get()));
+                response = Main.provideExecutor().execute(command, new CommandArgument(arg.get()), auth);
             }
             if (arg.getType().equals(String.class)) {
-                response = Main.provideExecutor().execute(command, new CommandArgument(arg.get()));
+                response = Main.provideExecutor().execute(command, new CommandArgument(arg.get()), auth);
             }
         }
 

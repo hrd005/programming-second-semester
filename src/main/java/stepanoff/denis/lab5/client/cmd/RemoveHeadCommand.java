@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static stepanoff.denis.lab5.common.util.ConsoleWriter.println;
+
 /**
  * Implementation of 'remove_head' command.
  */
@@ -32,7 +34,7 @@ public class RemoveHeadCommand extends Command {
 
             try {
                 Future<List<TypedEntity>> resp = this.connector.manageRequest(
-                        new Request(new CommandLabel(this.name))
+                        new Request(Main.provideCredentials(), new CommandLabel(this.name))
                 );
 
                 while (!resp.isDone()) {
@@ -45,8 +47,13 @@ public class RemoveHeadCommand extends Command {
 
                 if (ret.getType().equals(Ticket.class))
                     ConsoleWriter.println(ret.get().toString());
-                else
+                else {
+                    if ((Integer) resp.get().get(0).get() == 5) {
+                        println("Invalid credentials", ConsoleWriter.Color.RED);
+                        return;
+                    }
                     ConsoleWriter.println("Collection is empty.", ConsoleWriter.Color.YELLOW);
+                }
 
             } catch (InterruptedException e) {
                 Main.provideLogger().error(e.getMessage());

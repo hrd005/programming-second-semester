@@ -14,6 +14,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import static stepanoff.denis.lab5.common.util.ConsoleWriter.println;
+
 /**
  * Implementation of 'filter_greater_than_price' command.
  */
@@ -29,7 +31,9 @@ public class FilterGreaterThanPriceCommand extends ParametrisedCommand {
                 double price = Double.parseDouble(s[1]);
 
                 Future<List<TypedEntity>> resp = this.connector.manageRequest(
-                        new Request(new CommandLabel(this.name)).add(new TypedEntity(price))
+                        new Request(
+                                Main.provideCredentials(),
+                                new CommandLabel(this.name)).add(new TypedEntity(price))
                 );
 
                 while (!resp.isDone()) {
@@ -40,6 +44,10 @@ public class FilterGreaterThanPriceCommand extends ParametrisedCommand {
 
                 List<TypedEntity> ret = resp.get();
                 if (ret.size() == 1 && ret.get(0).getType().equals(Integer.class)) {
+                    if ((Integer) resp.get().get(0).get() == 5) {
+                        println("Invalid credentials", ConsoleWriter.Color.RED);
+                        return;
+                    }
                     ConsoleWriter.println("Nothing to show");
                     return;
                 }

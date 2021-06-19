@@ -21,7 +21,7 @@ import java.util.concurrent.FutureTask;
  */
 public class ServerConnector {
 
-    private static final String HOSTNAME = "192.168.1.85";
+    private static final String HOSTNAME = "localhost";
     private static final int    PORT     = 3080;
 
     private SocketChannel channel;
@@ -120,7 +120,7 @@ public class ServerConnector {
 
     private ByteBuffer readBytes(int count) throws IOException {
         ByteBuffer b = ByteBuffer.allocate(count);
-        b.clear();
+        //b.clear();
         while (b.position() != count) {
             this.channel.read(b);
         }

@@ -27,31 +27,31 @@ public class IdManager {
         else return this.currentIds.noneMatch((long t) -> t == id);
     }
 
-    /**
-     * Generate new id
-     * @param integerId true -- ID should be not greater than integer
-     * @return id
-     */
-    public long getNewId(boolean integerId) {
-
-        long maxPossible = integerId ? Integer.MAX_VALUE : Long.MAX_VALUE;
-
-        long maxCurrent = this.currentIds.max().orElse(0);
-
-        if (maxCurrent < maxPossible) {
-            return maxCurrent + 1;
-        } else {
-            long id = 1;
-            while (!this.isIdAppropriate(id) && id <= maxPossible) {
-                id += 1;
-            }
-
-            if (id <= 0 || id > maxPossible) {
-                Main.provideLogger().error("Looks like all possible ID's are run out.");
-                throw new IndexOutOfBoundsException("No ID could be created.");
-            }
-
-            return id;
-        }
-    }
+//    /**
+//     * Generate new id
+//     * @param integerId true -- ID should be not greater than integer
+//     * @return id
+//     */
+//    public long getNewId(boolean integerId) {
+//
+//        long maxPossible = integerId ? Integer.MAX_VALUE : Long.MAX_VALUE;
+//
+//        long maxCurrent = this.currentIds.max().orElse(0);
+//
+//        if (maxCurrent < maxPossible) {
+//            return maxCurrent + 1;
+//        } else {
+//            long id = 1;
+//            while (!this.isIdAppropriate(id) && id <= maxPossible) {
+//                id += 1;
+//            }
+//
+//            if (id <= 0 || id > maxPossible) {
+//                Main.provideLogger().error("Looks like all possible ID's are run out.");
+//                throw new IndexOutOfBoundsException("No ID could be created.");
+//            }
+//
+//            return id;
+//        }
+//    }
 }

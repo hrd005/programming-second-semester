@@ -101,7 +101,7 @@ public class Venue implements Serializable {
             this.venue = venue;
         }
 
-        private Builder id(long id) {
+        public Builder id(long id) {
 
             this.venue.id = id;
             return this;

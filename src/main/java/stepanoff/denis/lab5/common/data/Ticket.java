@@ -97,6 +97,15 @@ public class Ticket implements Comparable<Ticket>, Serializable {
         return venue;
     }
 
+    private int ownerId;
+
+    /**
+     * @return id of user had created this ticket
+     */
+    public int getOwnerId() {
+        return ownerId;
+    }
+
     /**
      * Generate Ticket (will be generated new id and creation date)
      * @return Builder of Ticket with new ID and Creation Date
@@ -150,7 +159,7 @@ public class Ticket implements Comparable<Ticket>, Serializable {
             this.ticket = ticket;
         }
 
-        private Builder id(int id) {
+        public Builder id(int id) {
             this.ticket.id = id;
             return this;
         }
@@ -271,6 +280,10 @@ public class Ticket implements Comparable<Ticket>, Serializable {
             return this.venue(builder.build());
         }
 
+        public Builder owner(int ownerId) {
+            this.ticket.ownerId = ownerId;
+            return this;
+        }
         /**
          * Build Ticket with specified values
          * @return Ticket

@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static stepanoff.denis.lab5.common.util.ConsoleWriter.println;
+
 /**
  * Implementation of 'info' command.
  */
@@ -32,13 +34,16 @@ public class InfoCommand extends Command{
 
             try {
                 Future<List<TypedEntity>> resp = this.connector.manageRequest(
-                        new Request(new CommandLabel(this.name))
+                        new Request(Main.provideCredentials(), new CommandLabel(this.name))
                 );
                 while (!resp.isDone()) {
                     Thread.sleep(50);
                     System.out.print('.');
                 }
                 System.out.println();
+
+                if (resp.get().get(0).getType().equals(Integer.class) && (Integer) resp.get().get(0).get() == 5)
+                    println("Invalid credentials", ConsoleWriter.Color.RED);
 
                 ConsoleWriter.println((String) resp.get().get(0).get());
             } catch (InterruptedException e) {

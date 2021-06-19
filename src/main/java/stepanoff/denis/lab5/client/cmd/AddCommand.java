@@ -7,7 +7,7 @@ import stepanoff.denis.lab5.common.data.*;
 import stepanoff.denis.lab5.common.net.NetException;
 import stepanoff.denis.lab5.common.util.ConsoleWriter;
 import stepanoff.denis.lab5.common.util.TypedEntity;
-import stepanoff.denis.lab5.server.dataio.InvalidFileException;
+import stepanoff.denis.lab5.server.dataio.file.InvalidFileException;
 
 import java.io.IOException;
 import java.util.List;
@@ -72,6 +72,7 @@ public class AddCommand extends ParametrisedCommand {
 
                 Future<List<TypedEntity>> ret = connector.manageRequest(
                         new Request(
+                                Main.provideCredentials(),
                                 new CommandLabel(this.name)
                         ).add(new TypedEntity(_new))
                 );
@@ -83,6 +84,8 @@ public class AddCommand extends ParametrisedCommand {
                 System.out.println();
                 if ((Integer) ret.get().get(0).get() == 1)
                     println("Ticket added", Color.GREEN);
+                else if ((Integer) ret.get().get(0).get() == 5)
+                    println("Invalid credentials", Color.RED);
                 else
                     println("Server hadn't held request correctly", Color.RED);
 

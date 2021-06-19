@@ -26,7 +26,7 @@ public class ClearCommand extends Command {
         this.action = (String... a) -> {
             try {
                 Future<List<TypedEntity>> resp = this.connector.manageRequest(
-                        new Request(new CommandLabel(this.name))
+                        new Request(Main.provideCredentials(), new CommandLabel(this.name))
                 );
 
                 while (!resp.isDone()) {
@@ -36,6 +36,8 @@ public class ClearCommand extends Command {
                 System.out.println();
                 if ((Integer) resp.get().get(0).get() == 1)
                     println("Collection cleared", ConsoleWriter.Color.GREEN);
+                else if ((Integer) resp.get().get(0).get() == 5)
+                    println("Invalid credentials", ConsoleWriter.Color.RED);
                 else
                     println("Server hadn't held request correctly", ConsoleWriter.Color.RED);
             } catch (InterruptedException e) {

@@ -46,7 +46,7 @@ public class UpdateCommand extends ParametrisedCommand {
             try {
 
                 Future<List<TypedEntity>> resp = this.connector.manageRequest(
-                        new Request(new CommandLabel("show")).add(new TypedEntity(id))
+                        new Request(Main.provideCredentials(), new CommandLabel("show")).add(new TypedEntity(id))
                 );
 
                 while (!resp.isDone()) {
@@ -106,7 +106,7 @@ public class UpdateCommand extends ParametrisedCommand {
 
                 if (!t.equals(tBuilder.build())) {
                     resp = this.connector.manageRequest(
-                            new Request(new CommandLabel(this.name)).add(new TypedEntity(tBuilder.build()))
+                            new Request(Main.provideCredentials(), new CommandLabel(this.name)).add(new TypedEntity(tBuilder.build()))
                     );
                     while (!resp.isDone()) {
                         Thread.sleep(50);

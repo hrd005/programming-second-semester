@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import static stepanoff.denis.lab5.common.util.ConsoleWriter.println;
+
 /**
  * Implementation of 'show' command.
  */
@@ -25,7 +27,7 @@ public class ShowCommand extends Command {
         this.action = (String... a) -> {
             try {
                 Future<List<TypedEntity>> resp = new ServerConnector().manageRequest(
-                        new Request(new CommandLabel(this.name))
+                        new Request(Main.provideCredentials(), new CommandLabel(this.name))
                 );
                 while (!resp.isDone()) {
                     Thread.sleep(50);
@@ -36,6 +38,10 @@ public class ShowCommand extends Command {
                 List<TypedEntity> ret = resp.get();
 
                 if (ret.size() == 1 && ret.get(0).getType().equals(Integer.class)) {
+                    if ((Integer) resp.get().get(0).get() == 5) {
+                        println("Invalid credentials", ConsoleWriter.Color.RED);
+                        return;
+                    }
                     ConsoleWriter.println("Nothing to show");
                     return;
                 }
